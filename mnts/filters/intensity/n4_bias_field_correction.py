@@ -12,43 +12,43 @@ class N4ITKBiasFieldCorrection(MNTSIntensityBase, MNTSFilter):
     Comput the
 
     Attributes:
-        max_iteration (int):
-            The maximum number of iterations specified at each fitting level. Default = 50.
-        num_of_fitting_lv (int):
-            The number of control points for the B-spline fitting. Default = 4.
+        max_iterations (list(int)):
+            The maximum number of iterations specified at each fitting level. Default = [50,40,30,20,10]
         convergence_threshold (float):
-            Fitting stopping criteria. Default = 0.01
+            Fitting stopping criteria. Default = 0.001
         num_hist_bins (int):
             Number of histogram bins. Default = 200.
     """
-    def __init__(self
+    def __init__(self, max_iterations=[50,40,30,20,10]
                  ):
         super(N4ITKBiasFieldCorrection, self).__init__()
-        self._max_iteration = 50
-        self._num_of_fitting_lv = 4
-        self._convergence_threshold = 0.1
+        self._max_iterations = max_iterations
+        #self._num_of_fitting_lv = 4
+        self._convergence_threshold = 0.0001
         self._num_hist_bins = 200
+
+        print(self._max_iterations)
 
         self._last_bias_field = None
         pass
 
     @property
-    def max_iteration(self) -> int:
-        return self._max_iteration
+    def max_iterations(self) -> List[int]:
+        return self._max_iterations
 
-    @max_iteration.setter
-    def max_iteration(self, val: int) -> None:
-        assert val >= 1, "Number of iteration must be >= 1."
-        self._max_iteration = int(val)
+    @max_iterations.setter
+    def max_iterations(self, val: List[int]) -> None:
+        #assert val >= 1, "Number of iteration must be >= 1."
+        self._max_iterations = val
 
     @property
     def num_of_fitting_lv(self) -> int:
-        return self._num_of_fitting_lv
+        return len(self._max_iterations)
 
-    @num_of_fitting_lv.setter
-    def num_of_fitting_lv(self, val: int) -> None:
-        assert val >= 2, "Number of fitting level is meaningless below 2."
-        self._num_of_fitting_lv = int(val)
+    #@num_of_fitting_lv.setter
+    #def num_of_fitting_lv(self, val: int) -> None:
+    #    assert val >= 2, "Number of fitting level is meaningless below 2."
+    #    self._num_of_fitting_lv = int(val)
 
     @property
     def convergence_thres(self) -> float:
@@ -87,7 +87,8 @@ class N4ITKBiasFieldCorrection(MNTSIntensityBase, MNTSFilter):
 
 
         corrector = sitk.N4BiasFieldCorrectionImageFilter()
-        corrector.SetMaximumNumberOfIterations([self.max_iteration] * self.num_of_fitting_lv)
+        #corrector.SetMaximumNumberOfIterations([self.max_iteration] * self.num_of_fitting_lv)
+        corrector.SetMaximumNumberOfIterations(self.max_iterations)
         corrector.Execute(shrinked, shirinked_mask)
 
         log_bias_field = corrector.GetLogBiasFieldAsImage(input)
